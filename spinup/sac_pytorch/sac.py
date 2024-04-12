@@ -12,7 +12,6 @@ import argparse
 
 
 
-
 class ReplayBuffer:
     """
     A simple FIFO experience replay buffer for SAC agents.
@@ -156,10 +155,11 @@ def sac(env_fn: gym.Env, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), see
 
     env, test_env = env_fn(), env_fn()
     obs_dim = env.observation_space.shape
-    act_dim = env.action_space.shape[0]
+    assert type(env.action_space) == gym.spaces.Discrete, "This example is only compatible with discrete action spaces."
+    act_dim = 1
 
-    # Action limit for clamping: critically, assumes all dimensions share the same bound!
-    act_limit = env.action_space.high[0]
+    # # Action limit for clamping: critically, assumes all dimensions share the same bound!
+    # act_limit = env.action_space.high[0]
 
     # Create actor-critic module and target networks
     ac = actor_critic(env.observation_space, env.action_space, **ac_kwargs)
@@ -183,44 +183,68 @@ def sac(env_fn: gym.Env, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), see
     def compute_loss_q(data):
         o, a, r, o2, d = data['obs'], data['act'], data['rew'], data['obs2'], data['done']
 
-        q1 = ac.q1(o,a)
-        q2 = ac.q2(o,a)
+        q1_a, _ = ac.q1(o,a)
+        q2_a, _ = ac.q2(o,a)
+
 
         # Bellman backup for Q functions
         with torch.no_grad():
             # Target actions come from *current* policy
-            a2, logp_a2 = ac.pi(o2)
+            a2, a2_probs, logp_a2 = ac.pi(o2)
 
             # Target Q-values
-            q1_pi_targ = ac_targ.q1(o2, a2)
-            q2_pi_targ = ac_targ.q2(o2, a2)
-            q_pi_targ = torch.min(q1_pi_targ, q2_pi_targ)
-            backup = r + gamma * (1 - d) * (q_pi_targ - alpha * logp_a2)
+            _, q1_targ_all = ac_targ.q1(o2, a2)
+            _, q2_targ_all = ac_targ.q2(o2, a2)
+            q_pi_targ = torch.min(q1_targ_all, q2_targ_all)
+            # print("r: ", r.shape)
+            # print("gamma: ", gamma)
+            # print("d: ", d.shape)
+            # print("a2_probs: ", a2_probs.shape)
+            # print("q_pi_targ: ", q_pi_targ.shape)
+            # print("alpha: ", alpha)
+            # print("logp_a2: ", logp_a2.shape)
+            backup = r + gamma * (1 - d) * (a2_probs * (q_pi_targ - alpha * logp_a2)).sum(dim=1)
+            # print("backup: ", backup.shape)
+            # assert False
 
         # MSE loss against Bellman backup
-        loss_q1 = ((q1 - backup)**2).mean()
-        loss_q2 = ((q2 - backup)**2).mean()
+        # print("q1_a: ", q1_a.shape)
+        # print("backup: ", backup.shape)
+        print("q1_a: ", q1_a.grad_fn)
+        print("q2_a: ", q2_a.grad_fn)
+        print("backup: ", backup.grad_fn)
+
+        loss_q1 = ((q1_a - backup)**2).mean()
+        loss_q2 = ((q2_a - backup)**2).mean()
         loss_q = loss_q1 + loss_q2
+        print("Q loss: ", loss_q)
 
         # Useful info for logging
-        q_info = dict(Q1Vals=q1.detach().numpy(),
-                      Q2Vals=q2.detach().numpy())
+        q_info = dict(Q1Vals=q1_a.detach().numpy(),
+                      Q2Vals=q2_a.detach().numpy())
 
         return loss_q, q_info
 
     # Set up function for computing SAC pi loss
     def compute_loss_pi(data):
         o = data['obs']
-        pi, logp_pi = ac.pi(o)
-        q1_pi = ac.q1(o, pi)
-        q2_pi = ac.q2(o, pi)
-        q_pi = torch.min(q1_pi, q2_pi)
+        a, prob_a, logp_a = ac.pi(o)
+        _, q1_all = ac.q1(o,a)
+        _, q2_all = ac.q2(o,a)
+        # print("q1_all: ", q1_all.shape)
+        # print("q2_all: ", q2_all.shape)
+        q_pi = torch.min(q1_all, q2_all)
+        # print("q_pi: ", q_pi.shape)
 
         # Entropy-regularized policy loss
-        loss_pi = (alpha * logp_pi - q_pi).mean()
+        print("q_pi: ", q_pi.grad_fn)
+        print("prob_a: ", prob_a.grad_fn)
+        print("logp_a: ", logp_a.grad_fn)
+        loss_pi = (prob_a * (alpha * logp_a - q_pi)).sum(dim=1).mean()
+        print("Pi loss: ", loss_pi)
 
         # Useful info for logging
-        pi_info = dict(LogPi=logp_pi.detach().numpy())
+        pi_info = dict(LogPi=logp_a.detach().numpy())
 
         return loss_pi, pi_info
 
@@ -360,7 +384,7 @@ def sac(env_fn: gym.Env, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), see
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--env', type=str, default='MountainCarContinuous-v0')
+    parser.add_argument('--env', type=str, default='MountainCar-v0')
     parser.add_argument('--hid', type=int, default=256)
     parser.add_argument('--l', type=int, default=2)
     parser.add_argument('--gamma', type=float, default=0.99)

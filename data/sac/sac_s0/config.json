@@ -1,19 +1,18 @@
 {
     "ac_kwargs":	{
         "hidden_sizes":	[
-            256,
-            256
+            50
         ]
     },
     "actor_critic":	"MLPActorCritic",
     "alpha":	0.2,
     "batch_size":	100,
-    "env_fn":	"<function <lambda> at 0x000002068AD739D0>",
+    "env_fn":	"<function <lambda> at 0x0000024B53C24A60>",
     "epochs":	50,
     "exp_name":	"sac",
     "gamma":	0.99,
     "logger":	{
-        "<spinup.utils.logx.EpochLogger object at 0x000002068AD77100>":	{
+        "<spinup.utils.logx.EpochLogger object at 0x0000024B53C291F0>":	{
             "epoch_dict":	{},
             "exp_name":	"sac",
             "first_row":	true,
