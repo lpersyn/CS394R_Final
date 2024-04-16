@@ -33,6 +33,37 @@ class TimeLimit(gym.Wrapper):
         return self.env.reset(**kwargs)
 
 
+class MinAtarNoopResetEnv(gym.Wrapper):
+    
+    def __init__(self, env, noop_max=30):
+        """Sample initial states by taking random number of no-ops on reset.
+        No-op is assumed to be action 0.
+        """
+        gym.Wrapper.__init__(self, env)
+        self.noop_max = noop_max
+        self.override_num_noops = None
+        self.noop_action = 0
+        assert env.game.env.action_map[0] == 'n'         
+
+
+    def reset(self, **kwargs):
+        """ Do no-op action for a number of steps in [1, noop_max]."""
+        self.env.reset(**kwargs)
+        if self.override_num_noops is not None:
+            noops = self.override_num_noops
+        else:
+            noops = self.unwrapped.np_random.integers(1, self.noop_max + 1)  # pylint: disable=E1101
+        assert noops > 0
+        obs = None
+        for _ in range(noops):
+            obs, _, done, trunc, info = self.env.step(self.noop_action)
+            if done or trunc:
+                obs, info = self.env.reset(**kwargs)
+        return obs, info
+
+    def step(self, ac):
+        return self.env.step(ac)
+
 class NoopResetEnv(gym.Wrapper):
     def __init__(self, env, noop_max=30):
         """Sample initial states by taking random number of no-ops on reset.
@@ -42,7 +73,8 @@ class NoopResetEnv(gym.Wrapper):
         self.noop_max = noop_max
         self.override_num_noops = None
         self.noop_action = 0
-        assert env.unwrapped.get_action_meanings()[0] == 'NOOP'
+        assert env.unwrapped.get_action_meanings()[0] == 'NOOP'            
+
 
     def reset(self, **kwargs):
         """ Do no-op action for a number of steps in [1, noop_max]."""
@@ -76,6 +108,26 @@ class FireResetEnv(gym.Wrapper):
         if done or trunc:
             self.env.reset(**kwargs)
         obs, _, done, trunc, info = self.env.step(2)
+        if done or trunc:
+            self.env.reset(**kwargs)
+        return obs, info
+
+    def step(self, ac):
+        return self.env.step(ac)
+    
+class MinAtarFireResetEnv(gym.Wrapper):
+    def __init__(self, env):
+        """Take action on reset for environments that are fixed until firing."""
+        gym.Wrapper.__init__(self, env)
+        assert env.game.env.action_map[5] == 'f'
+        assert len(env.game.env.action_map) >= 3
+
+    def reset(self, **kwargs):
+        self.env.reset(**kwargs)
+        obs, _, done, trunc, info = self.env.step(5) #fire == 5
+        if done or trunc:
+            self.env.reset(**kwargs)
+        obs, _, done, trunc, info = self.env.step(3) # right == 3
         if done or trunc:
             self.env.reset(**kwargs)
         return obs, info
