@@ -1,0 +1,9 @@
+## packages needed for Space_Invaders.py
+gymnasium
+opencv-python
+torch
+nn_builder
+matplotlib
+"gymnasium[atari,accept-rom-license]"
+atari-py
+##
