@@ -1,5 +1,5 @@
 import gymnasium as gym
-from environments.Atari_Environment import make_atari_game, make_atari_ram_game
+from environments.Atari_Environment import make_atari_ram_game
 from agents.actor_critic_agents.SAC_Discrete_ram import SAC_Discrete
 # from agents.hierarchical_agents.HRL.HRL import HRL
 # from agents.hierarchical_agents.HRL.Model_HRL import Model_HRL
@@ -90,8 +90,7 @@ config.hyperparameters = {
     "Actor_Critic_Agents": {
         "Actor": {
             "learning_rate": 0.0003,
-            "linear_hidden_units": [["linear", 64],
-                         ["linear", 64]],
+            "linear_hidden_units": [64, 64],
             "final_layer_activation": "Softmax",
             # "columns_of_data_to_be_embedded": [0],
             # "embedding_dimensions": [[config.environment.observation_space.n, embedding_dimensionality]],
@@ -103,8 +102,7 @@ config.hyperparameters = {
 
         "Critic": {
             "learning_rate": 0.0003,
-            "linear_hidden_units": [["linear", 64],
-                         ["linear", 64]],
+            "linear_hidden_units": [64, 64],
             "final_layer_activation": None,
             # "columns_of_data_to_be_embedded": [0],
             # "embedding_dimensions": [[config.environment.observation_space.n, embedding_dimensionality]],

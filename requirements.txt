@@ -1,12 +1,3 @@
-## packages needed for Space_Invaders.py
-gymnasium
-opencv-python
-torch
-nn_builder
-matplotlib
-"gymnasium[atari,accept-rom-license]"
-atari-py
-##
 ale-py==0.8.1
 AutoROM==0.4.2
 AutoROM.accept-rom-license==0.6.1
