@@ -10,20 +10,20 @@ from utilities.data_structures.Config import Config
 config = Config()
 config.seed = 1
 config.environment_short_name = "MinAtar_SpaceInvaders"
-config.save_every_n_steps = 1000
+config.save_every_n_steps = 100000
 config.load_path = None
 config.render = False
 config.environment = make_minatar_game("MinAtar/SpaceInvaders-v0", max_episode_steps=1000, render_mode=config.render)
 
 config.env_parameters = {}
-config.num_episodes_to_run = 500
+config.num_episodes_to_run = 1000000
 config.file_to_save_data_results = "data_and_graphs/minatar_space_invaders/Space_Invaders_Data.pkl"
 config.file_to_save_results_graph = "data_and_graphs/minatar_space_invaders/Space_Invaders.png"
 config.show_solution_score = False
 config.visualise_individual_results = False
 config.visualise_overall_agent_results = True
 config.standard_deviation_results = 1.0
-config.runs_per_agent = 10
+config.runs_per_agent = 1
 config.use_GPU = True
 config.overwrite_existing_results_file = False
 config.randomise_random_seed = True
