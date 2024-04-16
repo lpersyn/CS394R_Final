@@ -91,9 +91,7 @@ config.hyperparameters = {
     "Actor_Critic_Agents": {
         "Actor": {
             "learning_rate": 0.0003,
-            "linear_hidden_units": [["conv", 32, 3, 1, 0], ["maxpool", 2, 2, 0], 
-                         ["conv", 32, 3, 1, 2], ["avgpool", 2, 2, 0], 
-                         ["linear", 10]],
+            "linear_hidden_units": [["conv", 16, 3, 1, 0], ["linear", 128]],
             "final_layer_activation": "Softmax",
             # "columns_of_data_to_be_embedded": [0],
             # "embedding_dimensions": [[config.environment.observation_space.n, embedding_dimensionality]],
@@ -105,9 +103,7 @@ config.hyperparameters = {
 
         "Critic": {
             "learning_rate": 0.0003,
-            "linear_hidden_units": [["conv", 32, 3, 1, 0], ["maxpool", 2, 2, 0], 
-                         ["conv", 32, 3, 1, 2], ["avgpool", 2, 2, 0], 
-                         ["linear", 10]],
+            "linear_hidden_units": [["conv", 16, 3, 1, 0], ["linear", 128]],
             "final_layer_activation": None,
             # "columns_of_data_to_be_embedded": [0],
             # "embedding_dimensions": [[config.environment.observation_space.n, embedding_dimensionality]],
