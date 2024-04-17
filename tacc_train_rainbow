@@ -27,7 +27,7 @@
 #SBATCH -p gpu-a100                 # Queue (partition) name
 #SBATCH -N 1                        # Total # of nodes (must be 1 for serial)
 #SBATCH -n 1                        # Total # of mpi tasks (should be 1 for serial)
-#SBATCH --gpus 1
+
 #SBATCH -t 00:05:00                 # Run time (hh:mm:ss)
 #SBATCH --mail-type=all             # Send email at begin and end of job
 #SBATCH -A IRI24006                 # Project/Allocation name (req'd if you have more than 1)
@@ -37,7 +37,7 @@
 # module list
 # pwd
 # date
-conda activate /work/09320/lpersyn/ls6/cs394R/cs394-work-env
+conda activate ../cs394-work-env
 
 # Launch serial code...
-python /work/09320/lpersyn/ls6/cs394R/CS394R_Final/tianshou/atari_rainbow.py --epoch 1 --logdir /scratch/09320/lpersyn/cs394R/final_project_logs/     # Do not use ibrun or any other MPI launcher
+python ./tianshou/atari_rainbow.py --epoch 1 --logdir $SCRATCH/cs394R/final_project_logs/     # Do not use ibrun or any other MPI launcher
