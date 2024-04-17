@@ -19,7 +19,7 @@ class SAC_Discrete(SAC):
         assert self.config.hyperparameters["Actor"]["final_layer_activation"] == "Softmax", "Final actor layer must be softmax"
         self.hyperparameters = config.hyperparameters
         self.shuffle_channels = False
-        if isinstance(self.state_size, int):
+        if self.config.use_NN:
             self.critic_local = self.create_NN(input_dim=self.state_size, output_dim=self.action_size, key_to_use="Critic")
             self.critic_local_2 = self.create_NN(input_dim=self.state_size, output_dim=self.action_size,
                                             key_to_use="Critic", override_seed=self.config.seed + 1)
@@ -32,7 +32,7 @@ class SAC_Discrete(SAC):
                                                  lr=self.hyperparameters["Critic"]["learning_rate"], eps=1e-4)
         self.critic_optimizer_2 = torch.optim.Adam(self.critic_local_2.parameters(),
                                                    lr=self.hyperparameters["Critic"]["learning_rate"], eps=1e-4)
-        if isinstance(self.state_size, int):
+        if self.config.use_NN:
             self.critic_target = self.create_NN(input_dim=self.state_size, output_dim=self.action_size,
                                             key_to_use="Critic")
             self.critic_target_2 = self.create_NN(input_dim=self.state_size, output_dim=self.action_size,
@@ -46,7 +46,7 @@ class SAC_Discrete(SAC):
         Base_Agent.copy_model_over(self.critic_local_2, self.critic_target_2)
         self.memory = Replay_Buffer(self.hyperparameters["Critic"]["buffer_size"], self.hyperparameters["batch_size"],
                                     self.config.seed, device=self.device)
-        if isinstance(self.state_size, int):
+        if self.config.use_NN:
             self.actor_local = self.create_NN(input_dim=self.state_size, output_dim=self.action_size, key_to_use="Actor")
         else:
             self.actor_local = self.create_CNN(input_dim=self.state_size, output_dim=["linear", self.action_size], key_to_use="Actor")
@@ -68,10 +68,14 @@ class SAC_Discrete(SAC):
         if self.config.load_path:
             print("Loading in saved policy")
             self.locally_load_policy(self.config.load_path)
+
         try: 
             self.max_episode_steps = self.environment.max_episode_steps
         except:
-            self.max_episode_steps = self.environment.unwrapped.max_episode_steps
+            try: 
+                self.max_episode_steps = self.environment._max_episode_steps
+            except:
+                self.max_episode_steps = self.environment.unwrapped.max_episode_steps
 
     def produce_action_and_action_info(self, state):
         """Given the state, produces an action, the probability of the action, the log probability of the action, and
@@ -94,7 +98,7 @@ class SAC_Discrete(SAC):
         z = z.float() * 1e-8
         log_action_probabilities = torch.log(action_probabilities + z)
         return action, (action_probabilities, log_action_probabilities), max_probability_action
-
+    
     def calculate_critic_losses(self, state_batch, action_batch, reward_batch, next_state_batch, mask_batch):
         """Calculates the losses for the two critics. This is the ordinary Q-learning loss except the additional entropy
          term is taken into account"""
@@ -122,6 +126,7 @@ class SAC_Discrete(SAC):
         policy_loss = (action_probabilities * inside_term).sum(dim=1).mean()
         log_action_probabilities = torch.sum(log_action_probabilities * action_probabilities, dim=1)
         return policy_loss, log_action_probabilities
+
     
     def locally_save_policy(self):
         savetime = datetime.datetime.now().isoformat().replace(":", "-").replace(".", "-")

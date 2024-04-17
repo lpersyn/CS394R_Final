@@ -20,15 +20,19 @@ from agents.DQN_agents.DQN_With_Fixed_Q_Targets import DQN_With_Fixed_Q_Targets
 config = Config()
 config.seed = 1
 
-# config.load_path = None
-config.load_path = "./models/2024-04-15T13-07-51-344925"
-config.render = True
-if config.render:
-    config.environment = gym.make("CartPole-v0", render_mode='human')
-else:
-    config.environment = gym.make("CartPole-v0")
+config.load_path = None
+# config.load_path = "./models/2024-04-15T13-07-51-344925"
+config.render = False
+config.save_model = False
+config.save_every_n_steps = 5000
 
-config.num_episodes_to_run = 450
+if config.render:
+    config.environment = gym.make("CartPole-v1", render_mode='human', max_episode_steps=500)
+else:
+    config.environment = gym.make("CartPole-v1", max_episode_steps=500)
+config.use_NN = True # False for CNNs
+
+config.num_episodes_to_run = 1000
 config.file_to_save_data_results = "results/data_and_graphs/Cart_Pole_Results_Data.pkl"
 config.file_to_save_results_graph = "results/data_and_graphs/Cart_Pole_Results_Graph.png"
 config.show_solution_score = False
@@ -39,15 +43,14 @@ config.runs_per_agent = 1
 config.use_GPU = False
 config.overwrite_existing_results_file = False
 config.randomise_random_seed = True
-config.save_model = True
-config.save_every_n_episodes = 50
+
 
 
 
 config.hyperparameters = {
     "DQN_Agents": {
-        "learning_rate": 0.01,
-        "batch_size": 256,
+        "learning_rate": 0.001,
+        "batch_size": 32,
         "buffer_size": 40000,
         "epsilon": 1.0,
         "epsilon_decay_rate_denominator": 1,
@@ -96,7 +99,7 @@ config.hyperparameters = {
 
     "Actor_Critic_Agents":  {
 
-        "learning_rate": 0.005,
+        "learning_rate": 0.00003,
         "linear_hidden_units": [20, 10],
         "final_layer_activation": ["SOFTMAX", None],
         "gradient_clipping_norm": 5.0,
@@ -107,7 +110,7 @@ config.hyperparameters = {
         "clip_rewards": False,
 
         "Actor": {
-            "learning_rate": 0.0003,
+            "learning_rate": 0.00003,
             "linear_hidden_units": [64, 64],
             "final_layer_activation": "Softmax",
             "batch_norm": False,
@@ -117,18 +120,18 @@ config.hyperparameters = {
         },
 
         "Critic": {
-            "learning_rate": 0.0003,
+            "learning_rate": 0.00003,
             "linear_hidden_units": [64, 64],
             "final_layer_activation": None,
             "batch_norm": False,
-            "buffer_size": 1000000,
+            "buffer_size": 100000,
             "tau": 0.005,
             "gradient_clipping_norm": 5,
             "initialiser": "Xavier"
         },
 
         "min_steps_before_learning": 400,
-        "batch_size": 256,
+        "batch_size": 32,
         "discount_rate": 0.99,
         "mu": 0.0, #for O-H noise
         "theta": 0.15, #for O-H noise
@@ -145,6 +148,6 @@ config.hyperparameters = {
 }
 
 if __name__ == "__main__":
-    AGENTS = [SAC_Discrete] #, DDQN, DQN, DQN_With_Fixed_Q_Targets]
+    AGENTS = [DDQN] # SAC_Discrete, DDQN, DQN, DQN_With_Fixed_Q_Targets]
     trainer = Trainer(config, AGENTS)
     trainer.run_games_for_agents()

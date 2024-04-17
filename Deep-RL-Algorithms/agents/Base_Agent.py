@@ -29,6 +29,8 @@ class Base_Agent(object):
         self.lowest_possible_episode_score = self.get_lowest_possible_episode_score()
 
         self.state_size = self.get_state_size()
+        if self.config.use_NN:
+            self.state_size = int(self.state_size[0])
         # print("state size", self.state_size)
         self.hyperparameters = config.hyperparameters
         self.average_score_required_to_win = self.get_score_required_to_win()
@@ -306,16 +308,16 @@ class Base_Agent(object):
         if not isinstance(network, list): network = [network]
         optimizer.zero_grad() #reset gradients to 0
         loss.backward(retain_graph=retain_graph) #this calculates the gradients
-        if name == "Actor":
-            text = f""""\r Actor Loss -- {loss.item()}"""
-            sys.stdout.write(text)
-            sys.stdout.flush()
         # self.logger.info(f"{name} Loss -- {loss.item()}")
         if self.debug_mode: self.log_gradient_and_weight_information(network, optimizer)
         if clipping_norm is not None:
             for net in network:
                 torch.nn.utils.clip_grad_norm_(net.parameters(), clipping_norm) #clip gradients to help stabilise training
         optimizer.step() #this applies the gradients
+        if name == "Actor" or name == "q_network":
+            text = f""""\r {name} Loss -- {loss.item()}"""
+            sys.stdout.write(text)
+            sys.stdout.flush()
 
     def log_gradient_and_weight_information(self, network, optimizer):
 

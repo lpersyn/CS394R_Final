@@ -14,4 +14,7 @@ class DDQN(DQN_With_Fixed_Q_Targets):
         max_action_indexes = self.q_network_local(next_states).detach().argmax(1)
         Q_targets_next = self.q_network_target(next_states).gather(1, max_action_indexes.unsqueeze(1))
         return Q_targets_next 
+    
+    def time_for_critic_and_actor_to_learn(self):
+        return self.time_for_q_network_to_learn()
             

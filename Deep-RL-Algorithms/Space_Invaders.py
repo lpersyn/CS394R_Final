@@ -13,10 +13,12 @@ config.environment_short_name = "SpaceInvaders"
 config.save_every_n_steps = 10000
 config.load_path = None
 config.render = False
+config.save_model = True
+config.use_NN = False
 config.environment = make_atari_game("SpaceInvaders-v4", max_episode_steps=1000, render_mode=config.render)
 
 config.env_parameters = {}
-config.num_episodes_to_run = 500
+config.num_episodes_to_run = 1000
 config.file_to_save_data_results = "data_and_graphs/space_invaders/Space_Invaders_Data.pkl"
 config.file_to_save_results_graph = "data_and_graphs/space_invaders/Space_Invaders.png"
 config.show_solution_score = False
@@ -27,7 +29,6 @@ config.runs_per_agent = 10
 config.use_GPU = True
 config.overwrite_existing_results_file = False
 config.randomise_random_seed = True
-config.save_model = True
 
 
 # Loss is not drawing a random sample! otherwise wouldnt jump around that much!!
@@ -91,7 +92,7 @@ config.hyperparameters = {
     "Actor_Critic_Agents": {
         "Actor": {
             "learning_rate": 0.0003,
-            "linear_hidden_units": [["conv", 32, 3, 1, 0], ["maxpool", 2, 2, 0], 
+            "linear_hidden_units": [["conv", 32, 8, 4, 0], ["maxpool", 2, 2, 0], 
                          ["conv", 64, 3, 1, 2], ["avgpool", 2, 2, 0], 
                          ["linear", 10]],
             "final_layer_activation": "Softmax",
@@ -105,9 +106,8 @@ config.hyperparameters = {
 
         "Critic": {
             "learning_rate": 0.0003,
-            "linear_hidden_units": [["conv", 32, 3, 1, 0], ["maxpool", 2, 2, 0], 
-                         ["conv", 64, 3, 1, 2], ["avgpool", 2, 2, 0], 
-                         ["linear", 10]],
+            "linear_hidden_units": [["conv", 32, 8, 4, 0], ["conv", 64, 4, 2, 0],
+                                    ["conv", 64, 3, 1, 0], ["linear", 512]],
             "final_layer_activation": None,
             # "columns_of_data_to_be_embedded": [0],
             # "embedding_dimensions": [[config.environment.observation_space.n, embedding_dimensionality]],
@@ -118,8 +118,8 @@ config.hyperparameters = {
             "initialiser": "Xavier"
         },
 
-        "min_steps_before_learning": 10000,
-        "batch_size": 256,
+        "min_steps_before_learning": 20000,
+        "batch_size": 64,
         "discount_rate": 0.99,
         "mu": 0.0,  # for O-H noise
         "theta": 0.15,  # for O-H noise
@@ -127,7 +127,7 @@ config.hyperparameters = {
         "action_noise_std": 0.2,  # for TD3
         "action_noise_clipping_range": 0.5,  # for TD3
         "update_every_n_steps": 1,
-        "learning_updates_per_learning_session": 1,
+        "learning_updates_per_learning_session": 4,
         "automatically_tune_entropy_hyperparameter": True,
         "entropy_term_weight": None,
         "add_extra_noise": False,

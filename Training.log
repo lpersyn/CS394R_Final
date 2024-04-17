@@ -1,9 +1,9 @@
-2024-04-16 12:03:16,057 - agents.Base_Agent - INFO - 0 -- MinAtar/SpaceInvaders
-2024-04-16 12:03:16,058 - agents.Base_Agent - INFO - 1 -- DISCRETE
-2024-04-16 12:03:16,058 - agents.Base_Agent - INFO - 2 -- 6
-2024-04-16 12:03:16,058 - agents.Base_Agent - INFO - 3 -- None
-2024-04-16 12:03:16,058 - agents.Base_Agent - INFO - 4 -- (24, 10, 10)
-2024-04-16 12:03:16,058 - agents.Base_Agent - INFO - 5 -- {'Actor': {'learning_rate': 0.0003, 'linear_hidden_units': [['conv', 32, 3, 1, 0], ['maxpool', 2, 2, 0], ['conv', 32, 3, 1, 2], ['avgpool', 2, 2, 0], ['linear', 10]], 'final_layer_activation': 'Softmax', 'batch_norm': False, 'tau': 0.005, 'gradient_clipping_norm': 5, 'initialiser': 'Xavier'}, 'Critic': {'learning_rate': 0.0003, 'linear_hidden_units': [['conv', 32, 3, 1, 0], ['maxpool', 2, 2, 0], ['conv', 32, 3, 1, 2], ['avgpool', 2, 2, 0], ['linear', 10]], 'final_layer_activation': None, 'batch_norm': False, 'buffer_size': 1000000, 'tau': 0.005, 'gradient_clipping_norm': 5, 'initialiser': 'Xavier'}, 'min_steps_before_learning': 1000, 'batch_size': 32, 'discount_rate': 0.99, 'mu': 0.0, 'theta': 0.15, 'sigma': 0.25, 'action_noise_std': 0.2, 'action_noise_clipping_range': 0.5, 'update_every_n_steps': 1, 'learning_updates_per_learning_session': 1, 'automatically_tune_entropy_hyperparameter': True, 'entropy_term_weight': None, 'add_extra_noise': False, 'do_evaluation_iterations': True, 'clip_rewards': True}
-2024-04-16 12:03:16,059 - agents.Base_Agent - INFO - 6 -- None
-2024-04-16 12:03:16,059 - agents.Base_Agent - INFO - 7 -- 100
-2024-04-16 12:03:16,059 - agents.Base_Agent - INFO - 8 -- cuda:0
+2024-04-16 20:03:23,472 - agents.Base_Agent - INFO - 0 -- FrameStack<ClipRewardEnv<ScaledFloatFrame<WarpFrame<FireResetEnv<EpisodicLifeEnv<TimeLimit<MaxAndSkipEnv<NoopResetEnv<OrderEnforcing<PassiveEnvChecker<Atari
+2024-04-16 20:03:23,472 - agents.Base_Agent - INFO - 1 -- DISCRETE
+2024-04-16 20:03:23,472 - agents.Base_Agent - INFO - 2 -- 6
+2024-04-16 20:03:23,473 - agents.Base_Agent - INFO - 3 -- None
+2024-04-16 20:03:23,473 - agents.Base_Agent - INFO - 4 -- (4, 84, 84)
+2024-04-16 20:03:23,474 - agents.Base_Agent - INFO - 5 -- {'Actor': {'learning_rate': 0.0003, 'linear_hidden_units': [['conv', 32, 8, 4, 0], ['maxpool', 2, 2, 0], ['conv', 64, 3, 1, 2], ['avgpool', 2, 2, 0], ['linear', 10]], 'final_layer_activation': 'Softmax', 'batch_norm': False, 'tau': 0.005, 'gradient_clipping_norm': 5, 'initialiser': 'Xavier'}, 'Critic': {'learning_rate': 0.0003, 'linear_hidden_units': [['conv', 32, 8, 4, 0], ['conv', 64, 4, 2, 0], ['conv', 64, 3, 1, 0], ['linear', 512]], 'final_layer_activation': None, 'batch_norm': False, 'buffer_size': 1000000, 'tau': 0.005, 'gradient_clipping_norm': 5, 'initialiser': 'Xavier'}, 'min_steps_before_learning': 20000, 'batch_size': 64, 'discount_rate': 0.99, 'mu': 0.0, 'theta': 0.15, 'sigma': 0.25, 'action_noise_std': 0.2, 'action_noise_clipping_range': 0.5, 'update_every_n_steps': 1, 'learning_updates_per_learning_session': 4, 'automatically_tune_entropy_hyperparameter': True, 'entropy_term_weight': None, 'add_extra_noise': False, 'do_evaluation_iterations': True, 'clip_rewards': True}
+2024-04-16 20:03:23,475 - agents.Base_Agent - INFO - 6 -- inf
+2024-04-16 20:03:23,475 - agents.Base_Agent - INFO - 7 -- 100
+2024-04-16 20:03:23,476 - agents.Base_Agent - INFO - 8 -- cuda:0

@@ -108,7 +108,7 @@ config.hyperparameters = {
             # "columns_of_data_to_be_embedded": [0],
             # "embedding_dimensions": [[config.environment.observation_space.n, embedding_dimensionality]],
             "batch_norm": False,
-            "buffer_size": 1000000,
+            "buffer_size": 100000,
             "tau": 0.005,
             "gradient_clipping_norm": 5,
             "initialiser": "Xavier"
