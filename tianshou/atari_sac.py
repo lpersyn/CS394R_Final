@@ -17,6 +17,7 @@ from tianshou.policy import DiscreteSACPolicy, ICMPolicy
 from tianshou.policy.base import BasePolicy
 from tianshou.trainer import OffpolicyTrainer
 from tianshou.utils.net.discrete import Actor, Critic, IntrinsicCuriosityModule
+import warnings
 
 
 def get_args() -> argparse.Namespace:
@@ -88,13 +89,14 @@ def get_args() -> argparse.Namespace:
 
 
 def test_discrete_sac(args: argparse.Namespace = get_args()) -> None:
-    env, train_envs, test_envs = make_atari_env(
+    env, train_envs, test_envs, watch_env = make_atari_env(
         args.task,
         args.seed,
         args.training_num,
         args.test_num,
         scale=args.scale_obs,
         frame_stack=args.frames_stack,
+        create_watch_env=(args.watch and args.render > 0),
     )
     args.state_shape = env.observation_space.shape or env.observation_space.n
     args.action_shape = env.action_space.shape or env.action_space.n
@@ -217,27 +219,40 @@ def test_discrete_sac(args: argparse.Namespace = get_args()) -> None:
 
     # watch agent's performance
     def watch() -> None:
-        print("Setup test envs ...")
+        env_to_run = test_envs
+        if args.watch and args.render > 0:
+            env_to_run = watch_env
+        print("Setup watch envs ...")
         policy.eval()
-        test_envs.seed(args.seed)
+        env_to_run.seed(args.seed) # test_envs.seed(args.seed)
         if args.save_buffer_name:
             print(f"Generate buffer with size {args.buffer_size}")
             buffer = VectorReplayBuffer(
                 args.buffer_size,
-                buffer_num=len(test_envs),
+                buffer_num=len(env_to_run), # buffer_num=len(test_envs),
                 ignore_obs_next=True,
                 save_only_last_obs=True,
                 stack_num=args.frames_stack,
             )
-            collector = Collector(policy, test_envs, buffer, exploration_noise=True)
+            collector = Collector(policy, env_to_run, buffer, exploration_noise=True) # Collector(policy, test_envs, buffer, exploration_noise=True)
             result = collector.collect(n_step=args.buffer_size)
             print(f"Save buffer into {args.save_buffer_name}")
             # Unfortunately, pickle will cause oom with 1M buffer size
             buffer.save_hdf5(args.save_buffer_name)
         else:
-            print("Testing agent ...")
-            test_collector.reset()
-            result = test_collector.collect(n_episode=args.test_num, render=args.render)
+            print("Testing agent, not saving buffer ...")
+            print(f"Generate buffer with size {args.buffer_size}")
+            buffer = VectorReplayBuffer(
+                args.buffer_size,
+                buffer_num=len(env_to_run), # buffer_num=len(test_envs),
+                ignore_obs_next=True,
+                save_only_last_obs=True,
+                stack_num=args.frames_stack,
+            )
+            collector = Collector(policy, env_to_run, buffer, exploration_noise=True)
+            result = collector.collect(n_episode=args.test_num, render=args.render, reset_before_collect=args.watch)
+            # test_collector.reset()
+            # result = test_collector.collect(n_episode=args.test_num, render=args.render)
         result.pprint_asdict()
 
     if args.watch:
@@ -271,4 +286,5 @@ def test_discrete_sac(args: argparse.Namespace = get_args()) -> None:
 
 
 if __name__ == "__main__":
+    warnings.filterwarnings("ignore", category=DeprecationWarning) 
     test_discrete_sac(get_args())
