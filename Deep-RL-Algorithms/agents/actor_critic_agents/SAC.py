@@ -6,6 +6,7 @@ import torch
 import torch.nn.functional as F
 from torch.distributions import Normal
 import numpy as np
+import sys
 
 LOG_SIG_MAX = 2
 LOG_SIG_MIN = -20
@@ -157,6 +158,11 @@ class SAC(Base_Agent):
         if self.automatic_entropy_tuning: alpha_loss = self.calculate_entropy_tuning_loss(log_pi)
         else: alpha_loss = None
         self.update_actor_parameters(policy_loss, alpha_loss)
+        a_loss = alpha_loss.item() if alpha_loss is not None else 0
+        text = f""""\r Actor loss: {policy_loss.item():.8f}, Critic 1 loss: {qf1_loss.item():.8f}, Critic 2 loss: {qf2_loss.item():.8f}, Alpha: {self.alpha.item():.8f}, Alpha loss: {a_loss:.8f}"""
+        sys.stdout.write(text)
+        sys.stdout.flush()
+        # print("Actor loss: ", policy_loss.item(), " Critic 1 loss: ", qf1_loss.item(), " Critic 2 loss: ", qf2_loss.item(), " Alpha loss: ", alpha_loss.item() if alpha_loss is not None else "N/A")
 
     def sample_experiences(self):
         return  self.memory.sample()

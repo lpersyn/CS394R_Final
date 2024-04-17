@@ -103,7 +103,7 @@ class SAC_Discrete(SAC):
         """Calculates the losses for the two critics. This is the ordinary Q-learning loss except the additional entropy
          term is taken into account"""
         with torch.no_grad():
-            next_state_action, (action_probabilities, log_action_probabilities), _ = self.produce_action_and_action_info(next_state_batch)
+            _, (action_probabilities, log_action_probabilities), _ = self.produce_action_and_action_info(next_state_batch)
             qf1_next_target = self.critic_target(next_state_batch)
             qf2_next_target = self.critic_target_2(next_state_batch)
             min_qf_next_target = action_probabilities * (torch.min(qf1_next_target, qf2_next_target) - self.alpha * log_action_probabilities)
@@ -118,7 +118,7 @@ class SAC_Discrete(SAC):
 
     def calculate_actor_loss(self, state_batch):
         """Calculates the loss for the actor. This loss includes the additional entropy term"""
-        action, (action_probabilities, log_action_probabilities), _ = self.produce_action_and_action_info(state_batch)
+        _, (action_probabilities, log_action_probabilities), _ = self.produce_action_and_action_info(state_batch)
         qf1_pi = self.critic_local(state_batch)
         qf2_pi = self.critic_local_2(state_batch)
         min_qf_pi = torch.min(qf1_pi, qf2_pi)

@@ -27,9 +27,9 @@ config.save_model = False
 config.save_every_n_steps = 5000
 
 if config.render:
-    config.environment = gym.make("CartPole-v1", render_mode='human', max_episode_steps=500)
+    config.environment = gym.make("CartPole-v1", render_mode='human', max_episode_steps=200)
 else:
-    config.environment = gym.make("CartPole-v1", max_episode_steps=500)
+    config.environment = gym.make("CartPole-v1", max_episode_steps=200)
 config.use_NN = True # False for CNNs
 
 config.num_episodes_to_run = 1000
@@ -99,7 +99,7 @@ config.hyperparameters = {
 
     "Actor_Critic_Agents":  {
 
-        "learning_rate": 0.00003,
+        "learning_rate": 0.0003,
         "linear_hidden_units": [20, 10],
         "final_layer_activation": ["SOFTMAX", None],
         "gradient_clipping_norm": 5.0,
@@ -110,7 +110,7 @@ config.hyperparameters = {
         "clip_rewards": False,
 
         "Actor": {
-            "learning_rate": 0.00003,
+            "learning_rate": 0.0003,
             "linear_hidden_units": [64, 64],
             "final_layer_activation": "Softmax",
             "batch_norm": False,
@@ -120,7 +120,7 @@ config.hyperparameters = {
         },
 
         "Critic": {
-            "learning_rate": 0.00003,
+            "learning_rate": 0.0003,
             "linear_hidden_units": [64, 64],
             "final_layer_activation": None,
             "batch_norm": False,
@@ -131,7 +131,7 @@ config.hyperparameters = {
         },
 
         "min_steps_before_learning": 400,
-        "batch_size": 32,
+        "batch_size": 64,
         "discount_rate": 0.99,
         "mu": 0.0, #for O-H noise
         "theta": 0.15, #for O-H noise
@@ -139,7 +139,7 @@ config.hyperparameters = {
         "action_noise_std": 0.2,  # for TD3
         "action_noise_clipping_range": 0.5,  # for TD3
         "update_every_n_steps": 1,
-        "learning_updates_per_learning_session": 1,
+        "learning_updates_per_learning_session": 4,
         "automatically_tune_entropy_hyperparameter": True,
         "entropy_term_weight": None,
         "add_extra_noise": False,
@@ -148,6 +148,6 @@ config.hyperparameters = {
 }
 
 if __name__ == "__main__":
-    AGENTS = [DDQN] # SAC_Discrete, DDQN, DQN, DQN_With_Fixed_Q_Targets]
+    AGENTS = [SAC_Discrete] # SAC_Discrete, DDQN, DQN, DQN_With_Fixed_Q_Targets]
     trainer = Trainer(config, AGENTS)
     trainer.run_games_for_agents()

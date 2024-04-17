@@ -314,10 +314,10 @@ class Base_Agent(object):
             for net in network:
                 torch.nn.utils.clip_grad_norm_(net.parameters(), clipping_norm) #clip gradients to help stabilise training
         optimizer.step() #this applies the gradients
-        if name == "Actor" or name == "q_network":
-            text = f""""\r {name} Loss -- {loss.item()}"""
-            sys.stdout.write(text)
-            sys.stdout.flush()
+        # if name == "Actor" or name == "q_network":
+        #     text = f""""\r {name} Loss -- {loss.item()}"""
+        #     sys.stdout.write(text)
+        #     sys.stdout.flush()
 
     def log_gradient_and_weight_information(self, network, optimizer):
 
