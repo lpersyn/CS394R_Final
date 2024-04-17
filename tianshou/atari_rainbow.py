@@ -1,5 +1,3 @@
-# We got it from: https://github.com/aai-institute/tianshou/blob/master/examples/atari/
-
 import argparse
 import datetime
 import os
@@ -8,40 +6,48 @@ import sys
 
 import numpy as np
 import torch
-from atari_network import DQN
+from atari_network import Rainbow
 from atari_wrapper import make_atari_env
 
-from tianshou.data import Collector, VectorReplayBuffer
+from tianshou.data import Collector, PrioritizedVectorReplayBuffer, VectorReplayBuffer
 from tianshou.highlevel.logger import LoggerFactoryDefault
-from tianshou.policy import DiscreteSACPolicy, ICMPolicy
+from tianshou.policy import C51Policy, RainbowPolicy
 from tianshou.policy.base import BasePolicy
 from tianshou.trainer import OffpolicyTrainer
-from tianshou.utils.net.discrete import Actor, Critic, IntrinsicCuriosityModule
 
 
 def get_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--task", type=str, default="SpaceInvadersNoFrameskip-v4")
-    parser.add_argument("--seed", type=int, default=4213)
+    parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--scale-obs", type=int, default=0)
+    parser.add_argument("--eps-test", type=float, default=0.005)
+    parser.add_argument("--eps-train", type=float, default=1.0)
+    parser.add_argument("--eps-train-final", type=float, default=0.05)
     parser.add_argument("--buffer-size", type=int, default=100000)
-    parser.add_argument("--actor-lr", type=float, default=1e-5)
-    parser.add_argument("--critic-lr", type=float, default=1e-5)
+    parser.add_argument("--lr", type=float, default=0.0000625)
     parser.add_argument("--gamma", type=float, default=0.99)
+    parser.add_argument("--num-atoms", type=int, default=51)
+    parser.add_argument("--v-min", type=float, default=-10.0)
+    parser.add_argument("--v-max", type=float, default=10.0)
+    parser.add_argument("--noisy-std", type=float, default=0.1)
+    parser.add_argument("--no-dueling", action="store_true", default=False)
+    parser.add_argument("--no-noisy", action="store_true", default=False)
+    parser.add_argument("--no-priority", action="store_true", default=False)
+    parser.add_argument("--alpha", type=float, default=0.5)
+    parser.add_argument("--beta", type=float, default=0.4)
+    parser.add_argument("--beta-final", type=float, default=1.0)
+    parser.add_argument("--beta-anneal-step", type=int, default=5000000)
+    parser.add_argument("--no-weight-norm", action="store_true", default=False)
     parser.add_argument("--n-step", type=int, default=3)
-    parser.add_argument("--tau", type=float, default=0.005)
-    parser.add_argument("--alpha", type=float, default=0.05)
-    parser.add_argument("--auto-alpha", action="store_true", default=False)
-    parser.add_argument("--alpha-lr", type=float, default=3e-4)
+    parser.add_argument("--target-update-freq", type=int, default=500)
     parser.add_argument("--epoch", type=int, default=100)
     parser.add_argument("--step-per-epoch", type=int, default=100000)
     parser.add_argument("--step-per-collect", type=int, default=10)
     parser.add_argument("--update-per-step", type=float, default=0.1)
-    parser.add_argument("--batch-size", type=int, default=64)
-    parser.add_argument("--hidden-size", type=int, default=512)
+    parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--training-num", type=int, default=10)
     parser.add_argument("--test-num", type=int, default=10)
-    parser.add_argument("--rew-norm", type=int, default=False)
     parser.add_argument("--logdir", type=str, default="log")
     parser.add_argument("--render", type=float, default=0.0)
     parser.add_argument(
@@ -66,28 +72,10 @@ def get_args() -> argparse.Namespace:
         help="watch the play of pre-trained policy only",
     )
     parser.add_argument("--save-buffer-name", type=str, default=None)
-    parser.add_argument(
-        "--icm-lr-scale",
-        type=float,
-        default=0.0,
-        help="use intrinsic curiosity module with this lr scale",
-    )
-    parser.add_argument(
-        "--icm-reward-scale",
-        type=float,
-        default=0.01,
-        help="scaling factor for intrinsic curiosity reward",
-    )
-    parser.add_argument(
-        "--icm-forward-loss-weight",
-        type=float,
-        default=0.2,
-        help="weight for the forward model loss in ICM",
-    )
     return parser.parse_args()
 
 
-def test_discrete_sac(args: argparse.Namespace = get_args()) -> None:
+def test_rainbow(args: argparse.Namespace = get_args()) -> None:
     env, train_envs, test_envs = make_atari_env(
         args.task,
         args.seed,
@@ -105,82 +93,61 @@ def test_discrete_sac(args: argparse.Namespace = get_args()) -> None:
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
     # define model
-    net = DQN(
+    net = Rainbow(
         *args.state_shape,
         args.action_shape,
-        device=args.device,
-        features_only=True,
-        # output_dim_added_layer=args.hidden_size,
+        args.num_atoms,
+        args.noisy_std,
+        args.device,
+        is_dueling=not args.no_dueling,
+        is_noisy=not args.no_noisy,
     )
-    actor = Actor(net, args.action_shape, device=args.device, softmax_output=False)
-    actor_optim = torch.optim.Adam(actor.parameters(), lr=args.actor_lr)
-    critic1 = Critic(net, last_size=args.action_shape, device=args.device)
-    critic1_optim = torch.optim.Adam(critic1.parameters(), lr=args.critic_lr)
-    critic2 = Critic(net, last_size=args.action_shape, device=args.device)
-    critic2_optim = torch.optim.Adam(critic2.parameters(), lr=args.critic_lr)
-
+    optim = torch.optim.Adam(net.parameters(), lr=args.lr)
     # define policy
-    if args.auto_alpha:
-        target_entropy = 0.98 * np.log(np.prod(args.action_shape))
-        log_alpha = torch.zeros(1, requires_grad=True, device=args.device)
-        alpha_optim = torch.optim.Adam([log_alpha], lr=args.alpha_lr)
-        args.alpha = (target_entropy, log_alpha, alpha_optim)
-
-    policy: DiscreteSACPolicy | ICMPolicy
-    policy = DiscreteSACPolicy(
-        actor=actor,
-        actor_optim=actor_optim,
-        critic=critic1,
-        critic_optim=critic1_optim,
-        critic2=critic2,
-        critic2_optim=critic2_optim,
+    policy: C51Policy = RainbowPolicy(
+        model=net,
+        optim=optim,
+        discount_factor=args.gamma,
         action_space=env.action_space,
-        tau=args.tau,
-        gamma=args.gamma,
-        alpha=args.alpha,
+        num_atoms=args.num_atoms,
+        v_min=args.v_min,
+        v_max=args.v_max,
         estimation_step=args.n_step,
+        target_update_freq=args.target_update_freq,
     ).to(args.device)
-    if args.icm_lr_scale > 0:
-        feature_net = DQN(*args.state_shape, args.action_shape, args.device, features_only=True)
-        action_dim = np.prod(args.action_shape)
-        feature_dim = feature_net.output_dim
-        icm_net = IntrinsicCuriosityModule(
-            feature_net.net,
-            feature_dim,
-            action_dim,
-            hidden_sizes=[args.hidden_size],
-            device=args.device,
-        )
-        icm_optim = torch.optim.Adam(icm_net.parameters(), lr=args.actor_lr)
-        policy = ICMPolicy(
-            policy=policy,
-            model=icm_net,
-            optim=icm_optim,
-            action_space=env.action_space,
-            lr_scale=args.icm_lr_scale,
-            reward_scale=args.icm_reward_scale,
-            forward_loss_weight=args.icm_forward_loss_weight,
-        ).to(args.device)
     # load a previous policy
     if args.resume_path:
         policy.load_state_dict(torch.load(args.resume_path, map_location=args.device))
         print("Loaded agent from: ", args.resume_path)
     # replay buffer: `save_last_obs` and `stack_num` can be removed together
     # when you have enough RAM
-    buffer = VectorReplayBuffer(
-        args.buffer_size,
-        buffer_num=len(train_envs),
-        ignore_obs_next=True,
-        save_only_last_obs=True,
-        stack_num=args.frames_stack,
-    )
+    buffer: VectorReplayBuffer | PrioritizedVectorReplayBuffer
+    if args.no_priority:
+        buffer = VectorReplayBuffer(
+            args.buffer_size,
+            buffer_num=len(train_envs),
+            ignore_obs_next=True,
+            save_only_last_obs=True,
+            stack_num=args.frames_stack,
+        )
+    else:
+        buffer = PrioritizedVectorReplayBuffer(
+            args.buffer_size,
+            buffer_num=len(train_envs),
+            ignore_obs_next=True,
+            save_only_last_obs=True,
+            stack_num=args.frames_stack,
+            alpha=args.alpha,
+            beta=args.beta,
+            weight_norm=not args.no_weight_norm,
+        )
     # collector
     train_collector = Collector(policy, train_envs, buffer, exploration_noise=True)
     test_collector = Collector(policy, test_envs, exploration_noise=True)
 
     # log
     now = datetime.datetime.now().strftime("%y%m%d-%H%M%S")
-    args.algo_name = "discrete_sac_icm" if args.icm_lr_scale > 0 else "discrete_sac"
+    args.algo_name = "rainbow"
     log_name = os.path.join(args.task, args.algo_name, str(args.seed), now)
     log_path = os.path.join(args.logdir, log_name)
 
@@ -209,25 +176,43 @@ def test_discrete_sac(args: argparse.Namespace = get_args()) -> None:
             return mean_rewards >= 20
         return False
 
-    def save_checkpoint_fn(epoch: int, env_step: int, gradient_step: int) -> str:
-        # see also: https://pytorch.org/tutorials/beginner/saving_loading_models.html
-        ckpt_path = os.path.join(log_path, "checkpoint.pth")
-        torch.save({"model": policy.state_dict()}, ckpt_path)
-        return ckpt_path
+    def train_fn(epoch: int, env_step: int) -> None:
+        # nature DQN setting, linear decay in the first 1M steps
+        if env_step <= 1e6:
+            eps = args.eps_train - env_step / 1e6 * (args.eps_train - args.eps_train_final)
+        else:
+            eps = args.eps_train_final
+        policy.set_eps(eps)
+        if env_step % 1000 == 0:
+            logger.write("train/env_step", env_step, {"train/eps": eps})
+        if not args.no_priority:
+            if env_step <= args.beta_anneal_step:
+                beta = args.beta - env_step / args.beta_anneal_step * (args.beta - args.beta_final)
+            else:
+                beta = args.beta_final
+            buffer.set_beta(beta)
+            if env_step % 1000 == 0:
+                logger.write("train/env_step", env_step, {"train/beta": beta})
+
+    def test_fn(epoch: int, env_step: int | None) -> None:
+        policy.set_eps(args.eps_test)
 
     # watch agent's performance
     def watch() -> None:
         print("Setup test envs ...")
         policy.eval()
+        policy.set_eps(args.eps_test)
         test_envs.seed(args.seed)
         if args.save_buffer_name:
             print(f"Generate buffer with size {args.buffer_size}")
-            buffer = VectorReplayBuffer(
+            buffer = PrioritizedVectorReplayBuffer(
                 args.buffer_size,
                 buffer_num=len(test_envs),
                 ignore_obs_next=True,
                 save_only_last_obs=True,
                 stack_num=args.frames_stack,
+                alpha=args.alpha,
+                beta=args.beta,
             )
             collector = Collector(policy, test_envs, buffer, exploration_noise=True)
             result = collector.collect(n_step=args.buffer_size)
@@ -257,13 +242,13 @@ def test_discrete_sac(args: argparse.Namespace = get_args()) -> None:
         step_per_collect=args.step_per_collect,
         episode_per_test=args.test_num,
         batch_size=args.batch_size,
+        train_fn=train_fn,
+        test_fn=test_fn,
         stop_fn=stop_fn,
         save_best_fn=save_best_fn,
         logger=logger,
         update_per_step=args.update_per_step,
         test_in_train=False,
-        resume_from_log=args.resume_id is not None,
-        save_checkpoint_fn=save_checkpoint_fn,
     ).run()
 
     pprint.pprint(result)
@@ -271,4 +256,4 @@ def test_discrete_sac(args: argparse.Namespace = get_args()) -> None:
 
 
 if __name__ == "__main__":
-    test_discrete_sac(get_args())
+    test_rainbow(get_args())
