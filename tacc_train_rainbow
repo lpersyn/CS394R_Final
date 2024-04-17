@@ -39,4 +39,4 @@
 conda activate ../cs394-work-env
 
 # Launch serial code...
-python ./tianshou/atari_rainbow.py --epoch 1 --logdir $SCRATCH/cs394R/final_project_logs/     # Do not use ibrun or any other MPI launcher
+python ./tianshou/atari_rainbow.py --logdir $SCRATCH/cs394R/final_project_logs/     # Do not use ibrun or any other MPI launcher
