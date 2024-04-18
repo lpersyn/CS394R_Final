@@ -36,6 +36,7 @@
 # module list
 # pwd
 # date
+source /work/09320/lpersyn/ls6/anaconda3/etc/profile.d/conda.sh
 conda activate ../cs394-work-env
 
 # Launch serial code...
