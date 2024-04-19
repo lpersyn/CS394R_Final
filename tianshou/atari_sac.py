@@ -51,6 +51,7 @@ def get_args() -> argparse.Namespace:
         default="cuda" if torch.cuda.is_available() else "cpu",
     )
     parser.add_argument("--frames-stack", type=int, default=4)
+    parser.add_argument("--noise-weight", type=float, default=0.0) # how much noise to add to the image, 1.0 is good
     parser.add_argument("--resume-path", type=str, default=None)
     parser.add_argument("--resume-id", type=str, default=None)
     parser.add_argument(
@@ -96,6 +97,7 @@ def test_discrete_sac(args: argparse.Namespace = get_args()) -> None:
         args.test_num,
         scale=args.scale_obs,
         frame_stack=args.frames_stack,
+        noise=args.noise_weight,
         create_watch_env=(args.watch and args.render > 0),
     )
     args.state_shape = env.observation_space.shape or env.observation_space.n
@@ -217,7 +219,7 @@ def test_discrete_sac(args: argparse.Namespace = get_args()) -> None:
         torch.save({"model": policy.state_dict()}, ckpt_path)
         return ckpt_path
 
-    # watch agent's performance
+    # watch agent's performance, altered by Logan and Chloe
     def watch() -> None:
         env_to_run = test_envs
         if args.watch and args.render > 0:
@@ -254,6 +256,7 @@ def test_discrete_sac(args: argparse.Namespace = get_args()) -> None:
             # test_collector.reset()
             # result = test_collector.collect(n_episode=args.test_num, render=args.render)
         result.pprint_asdict()
+    ####################################################
 
     if args.watch:
         watch()

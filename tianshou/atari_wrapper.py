@@ -320,6 +320,27 @@ class FrameStack(gym.Wrapper):
         # it has no effect
         return np.stack(self.frames, axis=0)
 
+# Added By Logan and Chloe
+class NoisyImage(gym.ObservationWrapper):
+    def __init__(self, env: gym.Env, noise_weight: float = 0.1) -> None:
+        super().__init__(env)
+        self.noise_weight = noise_weight
+        # self.noise_shape = env.observation_space.shape
+        # self.observation_low = np.min(env.observation_space.low)
+        # self.observation_high = np.max(env.observation_space.high)
+        # print("Noise weight: ", self.noise_weight)  
+        self.generator = np.random.default_rng()
+
+    def observation(self, frame: np.ndarray) -> np.ndarray:
+        # print("Frame", frame)
+        noise = self.generator.normal(0, 0.1, frame.shape) * 255.0
+        float_frame = frame.astype(np.float32)
+        noisy_frame = float_frame + (self.noise_weight * noise)
+        # print("Noise shape: ", noise.shape, "Noise dtype: ", noise.dtype, "Frame shape: ", frame.shape, "Frame dtype: ", frame.dtype, "Noisy frame shape: ", noisy_frame.shape, "Noisy frame dtype: ", noisy_frame.dtype)
+        noisy_frame = np.clip(noisy_frame, 0, 255).astype(np.uint8)
+        # print("Noise", noisy_frame)
+        return noisy_frame
+#####################
 
 def wrap_deepmind(
     env: gym.Env,
@@ -328,11 +349,13 @@ def wrap_deepmind(
     frame_stack: int = 4,
     scale: bool = False,
     warp_frame: bool = True,
+    noise: float = 0.0,
 ) -> (
     MaxAndSkipEnv
     | EpisodicLifeEnv
     | FireResetEnv
     | WarpFrame
+    | NoisyImage
     | ScaledFloatFrame
     | ClipRewardEnv
     | FrameStack
@@ -362,6 +385,9 @@ def wrap_deepmind(
         wrapped_env = FireResetEnv(wrapped_env)
     if warp_frame:
         wrapped_env = WarpFrame(wrapped_env)
+    if noise:
+        # print("Adding noise to the image")
+        wrapped_env = NoisyImage(wrapped_env, noise_weight=noise)
     if scale:
         wrapped_env = ScaledFloatFrame(wrapped_env)
     if clip_rewards:
@@ -378,6 +404,7 @@ def make_atari_env(
     test_num: int,
     scale: int | bool = False,
     frame_stack: int = 4,
+    noise: float = 0.0, 
     create_watch_env: bool = False,
 ) -> tuple[Env, BaseVectorEnv, BaseVectorEnv, BaseVectorEnv | None]:
     """Wrapper function for Atari env.
@@ -386,7 +413,7 @@ def make_atari_env(
 
     :return: a tuple of (single env, training envs, test envs).
     """
-    env_factory = AtariEnvFactory(task, seed, frame_stack, scale=bool(scale))
+    env_factory = AtariEnvFactory(task, seed, frame_stack, scale=bool(scale), noise=noise)
     envs = env_factory.create_envs(training_num, test_num, create_watch_env)
     return envs.env, envs.train_envs, envs.test_envs, envs.watch_env
 
@@ -398,11 +425,13 @@ class AtariEnvFactory(EnvFactoryRegistered):
         seed: int,
         frame_stack: int,
         scale: bool = False,
+        noise: float = 0.0,
         use_envpool_if_available: bool = True,
     ) -> None:
         assert "NoFrameskip" in task
         self.frame_stack = frame_stack
         self.scale = scale
+        self.noise = noise
         envpool_factory = None
         if use_envpool_if_available:
             if envpool_is_available:
@@ -420,12 +449,15 @@ class AtariEnvFactory(EnvFactoryRegistered):
     def create_env(self, mode: EnvMode) -> gym.Env:
         env = super().create_env(mode)
         is_train = mode == EnvMode.TRAIN
+        if mode == EnvMode.WATCH:
+            env.metadata['render_fps'] = 30
         return wrap_deepmind(
             env,
             episode_life=is_train,
             clip_rewards=is_train,
             frame_stack=self.frame_stack,
             scale=self.scale,
+            noise=self.noise, # will add noise at test time
         )
 
     class EnvPoolFactoryAtari(EnvPoolFactory):
