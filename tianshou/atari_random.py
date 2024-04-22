@@ -110,7 +110,7 @@ def test_discrete_sac(args: argparse.Namespace = get_args()) -> None:
     logger = logger_factory.create_logger(
         log_dir=log_path,
         experiment_name=log_name,
-        run_id=args.resume_id,
+        run_id=None,
         config_dict=vars(args),
     )
 
