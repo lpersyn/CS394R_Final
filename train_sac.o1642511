@@ -1,9 +1,0 @@
-Observations shape: (4, 84, 84)
-Actions shape: 6
-Epoch #1: test_reward: 164.000000 ± 91.509562, best_reward: 316.500000 ± 18.172782 in #0
-Epoch #2: test_reward: 129.000000 ± 40.546270, best_reward: 316.500000 ± 18.172782 in #0
-Epoch #3: test_reward: 163.000000 ± 64.699304, best_reward: 316.500000 ± 18.172782 in #0
-Epoch #4: test_reward: 205.500000 ± 63.065442, best_reward: 316.500000 ± 18.172782 in #0
-Epoch #5: test_reward: 125.000000 ± 57.052607, best_reward: 316.500000 ± 18.172782 in #0
-Epoch #6: test_reward: 172.500000 ± 64.855609, best_reward: 316.500000 ± 18.172782 in #0
-Epoch #7: test_reward: 292.500000 ± 192.668757, best_reward: 316.500000 ± 18.172782 in #0
