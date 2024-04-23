@@ -14,6 +14,7 @@ from tianshou.highlevel.logger import LoggerFactoryDefault
 from tianshou.policy import C51Policy, RainbowPolicy
 from tianshou.policy.base import BasePolicy
 from tianshou.trainer import OffpolicyTrainer
+from dataclasses import asdict
 
 
 def get_args() -> argparse.Namespace:
@@ -237,9 +238,11 @@ def test_rainbow(args: argparse.Namespace = get_args()) -> None:
                 beta=args.beta,
             )
             collector = Collector(policy, env_to_run, buffer, exploration_noise=True)
-            result = collector.collect(n_episode=args.test_num, render=args.render, reset_before_collect=args.watch)
+            result = collector.collect(n_episode=100, render=args.render, reset_before_collect=args.watch)
             # test_collector.reset()
             # result = test_collector.collect(n_episode=args.test_num, render=args.render)
+        with open(os.path.join(log_path, "watch_result.txt"), "w") as f:
+            pprint.pprint(asdict(result), stream=f)
         result.pprint_asdict()
     ####################################################
 

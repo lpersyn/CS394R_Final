@@ -18,6 +18,7 @@ from tianshou.policy.base import BasePolicy
 from tianshou.trainer import OffpolicyTrainer
 from tianshou.utils.net.discrete import Actor, Critic, IntrinsicCuriosityModule
 import warnings
+from dataclasses import asdict
 
 
 def get_args() -> argparse.Namespace:
@@ -236,7 +237,7 @@ def test_discrete_sac(args: argparse.Namespace = get_args()) -> None:
                 save_only_last_obs=True,
                 stack_num=args.frames_stack,
             )
-            collector = Collector(policy, env_to_run, buffer, exploration_noise=True) # Collector(policy, test_envs, buffer, exploration_noise=True)
+            collector = Collector(policy, env_to_run, buffer, exploration_noise=False) # Collector(policy, test_envs, buffer, exploration_noise=True)
             result = collector.collect(n_step=args.buffer_size)
             print(f"Save buffer into {args.save_buffer_name}")
             # Unfortunately, pickle will cause oom with 1M buffer size
@@ -251,10 +252,12 @@ def test_discrete_sac(args: argparse.Namespace = get_args()) -> None:
                 save_only_last_obs=True,
                 stack_num=args.frames_stack,
             )
-            collector = Collector(policy, env_to_run, buffer, exploration_noise=True)
-            result = collector.collect(n_episode=args.test_num, render=args.render, reset_before_collect=args.watch)
+            collector = Collector(policy, env_to_run, buffer, exploration_noise=False)
+            result = collector.collect(n_episode=100, render=args.render, reset_before_collect=args.watch)
             # test_collector.reset()
             # result = test_collector.collect(n_episode=args.test_num, render=args.render)
+        with open(os.path.join(log_path, "watch_result.txt"), "w") as f:
+            pprint.pprint(asdict(result), stream=f)
         result.pprint_asdict()
     ####################################################
 
