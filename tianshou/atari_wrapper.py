@@ -322,14 +322,14 @@ class FrameStack(gym.Wrapper):
 
 # Added By Logan and Chloe
 class NoisyImage(gym.ObservationWrapper):
-    def __init__(self, env: gym.Env, noise_weight: float = 0.1) -> None:
+    def __init__(self, env: gym.Env, seed: int, noise_weight: float = 0.1) -> None:
         super().__init__(env)
         self.noise_weight = noise_weight
         # self.noise_shape = env.observation_space.shape
         # self.observation_low = np.min(env.observation_space.low)
         # self.observation_high = np.max(env.observation_space.high)
         # print("Noise weight: ", self.noise_weight)  
-        self.generator = np.random.default_rng()
+        self.generator = np.random.default_rng(seed)
 
     def observation(self, frame: np.ndarray) -> np.ndarray:
         # print("Frame", frame)
@@ -344,6 +344,7 @@ class NoisyImage(gym.ObservationWrapper):
 
 def wrap_deepmind(
     env: gym.Env,
+    seed: int,
     episode_life: bool = True,
     clip_rewards: bool = True,
     frame_stack: int = 4,
@@ -387,7 +388,7 @@ def wrap_deepmind(
         wrapped_env = WarpFrame(wrapped_env)
     if noise:
         # print("Adding noise to the image")
-        wrapped_env = NoisyImage(wrapped_env, noise_weight=noise)
+        wrapped_env = NoisyImage(wrapped_env, seed, noise_weight=noise)
     if scale:
         wrapped_env = ScaledFloatFrame(wrapped_env)
     if clip_rewards:
@@ -453,6 +454,7 @@ class AtariEnvFactory(EnvFactoryRegistered):
             env.metadata['render_fps'] = 30
         return wrap_deepmind(
             env,
+            seed=self.seed,
             episode_life=is_train,
             clip_rewards=is_train,
             frame_stack=self.frame_stack,
