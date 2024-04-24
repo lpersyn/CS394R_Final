@@ -18,6 +18,7 @@ from tianshou.policy.base import BasePolicy
 from tianshou.trainer import OffpolicyTrainer
 from tianshou.utils.net.discrete import Actor, Critic, IntrinsicCuriosityModule
 import warnings
+from dataclasses import asdict
 
 
 def get_args() -> argparse.Namespace:
@@ -252,9 +253,11 @@ def test_discrete_sac(args: argparse.Namespace = get_args()) -> None:
                 stack_num=args.frames_stack,
             )
             collector = Collector(policy, env_to_run, buffer, exploration_noise=True)
-            result = collector.collect(n_episode=args.test_num, render=args.render, reset_before_collect=args.watch)
+            result = collector.collect(n_episode=100, render=args.render, reset_before_collect=args.watch)
             # test_collector.reset()
             # result = test_collector.collect(n_episode=args.test_num, render=args.render)
+        with open(os.path.join(log_path, "watch_result.txt"), "w") as f:
+            pprint.pprint(asdict(result), stream=f)
         result.pprint_asdict()
     ####################################################
 
