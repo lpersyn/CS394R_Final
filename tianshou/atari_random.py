@@ -1,4 +1,4 @@
-# We got it from: https://github.com/aai-institute/tianshou/blob/master/examples/atari/
+# Source: https://github.com/aai-institute/tianshou/blob/master/examples/atari/
 
 import argparse
 import datetime

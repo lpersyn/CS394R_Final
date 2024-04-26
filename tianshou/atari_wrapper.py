@@ -1,4 +1,4 @@
-# We got it from: https://github.com/aai-institute/tianshou/blob/master/examples/atari/
+# Source: https://github.com/aai-institute/tianshou/blob/master/examples/atari/
 
 # Borrow a lot from openai baselines:
 # https://github.com/openai/baselines/blob/master/baselines/common/atari_wrappers.py

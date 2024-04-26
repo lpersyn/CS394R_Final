@@ -56,6 +56,16 @@ if __name__ == '__main__':
     
     dd=pd.melt(df,id_vars=['noise'],value_vars=[args.input1_name, args.input2_name], var_name='models')
     sns.boxplot(x='noise',y='value',data=dd,hue='models')
+    # Get the x-axis labels
+    x_labels = plt.xticks()[0]
+
+    # Filter the x-axis labels to show every other label
+    x_labels = x_labels[::2]
+    plt.xticks(x_labels)
+    plt.ylabel('Returns')
+    plt.xlabel('Noise Weight')
+    plt.title(f"{args.model_name} evaluated on different noise weights")
+    # Set the x-axis labels
     plt.show()
 
     # # plot the results
