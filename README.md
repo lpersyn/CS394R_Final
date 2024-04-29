@@ -3,7 +3,8 @@ Chloe Chen and Logan Persyn
 
 Final Report: `final_report.pdf`
 
-Video: INCLUDE URL
+Video: [YouTube](https://youtu.be/ae6hiMKkm5w)
+
 
 ## Environment
 1. Create new conda env with python 3.11: `conda create --name env_name python=3.11`
