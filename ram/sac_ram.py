@@ -311,21 +311,19 @@ if __name__ == '__main__':
         sac_trainer.save_model(model_path)
         import statistics
         with open("output.txt", "w") as f:
-            print("here")
-            print(statistics.mean(rewards))
             f.write("\n mean:")
             f.write(str(statistics.mean(rewards)))
 
     if args.test:
         sac_trainer.load_model(model_path)
         for eps in range(10):
-            state =  env.reset()
+            state, info =  env.reset()
             episode_reward = 0
 
             for step in range(max_steps):
                 action = sac_trainer.policy_net.get_action(state, deterministic = DETERMINISTIC)
-                next_state, reward, done, _ = env.step(action)
-                env.render()   
+                next_state, reward, done, truncated, info = env.step(action)
+                #env.render()   
 
 
                 episode_reward += reward
