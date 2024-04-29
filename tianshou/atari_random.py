@@ -1,4 +1,4 @@
-# We got it from: https://github.com/aai-institute/tianshou/blob/master/examples/atari/
+# Source: https://github.com/aai-institute/tianshou/blob/master/examples/atari/
 
 import argparse
 import datetime
@@ -43,9 +43,11 @@ def get_args() -> argparse.Namespace:
     # parser.add_argument("--hidden-size", type=int, default=512)
     parser.add_argument("--training-num", type=int, default=10)
     parser.add_argument("--test-num", type=int, default=10)
+    parser.add_argument("--test-n-episodes", type=int, default=100)
     # parser.add_argument("--rew-norm", type=int, default=False)
     parser.add_argument("--logdir", type=str, default="log")
     parser.add_argument("--render", type=float, default=0.0)
+    parser.add_argument("--record", default=False, action="store_true")
     parser.add_argument(
         "--device",
         type=str,
@@ -81,6 +83,7 @@ def test_discrete_sac(args: argparse.Namespace = get_args()) -> None:
         frame_stack=args.frames_stack,
         noise=args.noise_weight,
         create_watch_env=(args.watch and args.render > 0),
+        record=args.record,
     )
     args.state_shape = env.observation_space.shape or env.observation_space.n
     args.action_shape = env.action_space.shape or env.action_space.n
@@ -147,7 +150,7 @@ def test_discrete_sac(args: argparse.Namespace = get_args()) -> None:
                 stack_num=args.frames_stack,
             )
             collector = Collector(policy, env_to_run, buffer, exploration_noise=True)
-            result = collector.collect(n_episode=100, render=args.render, reset_before_collect=args.watch)
+            result = collector.collect(n_episode=args.test_n_episodes, render=args.render, reset_before_collect=args.watch)
             # test_collector.reset()
             # result = test_collector.collect(n_episode=args.test_num, render=args.render)
         with open(os.path.join(log_path, "watch_result.txt"), "w") as f:

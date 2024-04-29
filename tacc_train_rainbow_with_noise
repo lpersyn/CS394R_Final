@@ -21,9 +21,9 @@
 #       followed by "module help launcher".
 #----------------------------------------------------
 
-#SBATCH -J train_rainbow            # Job name
-#SBATCH -o train_rainbow.o%j        # Name of stdout output file
-#SBATCH -e train_rainbow.e%j        # Name of stderr error file
+#SBATCH -J train_rainbow_with_noise            # Job name
+#SBATCH -o train_rainbow_with_noise.o%j        # Name of stdout output file
+#SBATCH -e train_rainbow_with_noise.e%j        # Name of stderr error file
 #SBATCH -p gpu-a100                 # Queue (partition) name
 #SBATCH -N 1                        # Total # of nodes (must be 1 for serial)
 #SBATCH -n 1                        # Total # of mpi tasks (should be 1 for serial)

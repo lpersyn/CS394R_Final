@@ -1,4 +1,5 @@
-# We got it from: https://github.com/aai-institute/tianshou/blob/master/examples/atari/
+# Adpated from: https://github.com/aai-institute/tianshou/blob/master/examples/atari/
+# Mostly out own work
 
 import argparse
 import datetime
@@ -27,25 +28,9 @@ def get_args() -> argparse.Namespace:
     parser.add_argument("--task", type=str, default="SpaceInvadersNoFrameskip-v4")
     parser.add_argument("--seed", type=int, default=4213)
     parser.add_argument("--scale-obs", type=int, default=0)
-    parser.add_argument("--buffer-size", type=int, default=100000)
-    parser.add_argument("--actor-lr", type=float, default=1e-5)
-    parser.add_argument("--critic-lr", type=float, default=1e-5)
-    parser.add_argument("--gamma", type=float, default=0.99)
-    parser.add_argument("--n-step", type=int, default=3)
-    parser.add_argument("--tau", type=float, default=0.005)
-    parser.add_argument("--alpha", type=float, default=0.05)
-    parser.add_argument("--auto-alpha", action="store_true", default=False)
-    parser.add_argument("--alpha-lr", type=float, default=3e-4)
-    parser.add_argument("--epoch", type=int, default=100)
-    parser.add_argument("--step-per-epoch", type=int, default=100000)
-    parser.add_argument("--step-per-collect", type=int, default=10)
-    parser.add_argument("--update-per-step", type=float, default=0.1)
-    parser.add_argument("--batch-size", type=int, default=64)
-    parser.add_argument("--hidden-size", type=int, default=512)
     parser.add_argument("--training-num", type=int, default=1)
     parser.add_argument("--test-num", type=int, default=1)
     parser.add_argument("--rew-norm", type=int, default=False)
-    parser.add_argument("--logdir", type=str, default="log")
     parser.add_argument("--render", type=float, default=0.0)
     parser.add_argument(
         "--device",
@@ -54,44 +39,11 @@ def get_args() -> argparse.Namespace:
     )
     parser.add_argument("--frames-stack", type=int, default=4)
     parser.add_argument("--noise-weight", type=float, default=0.0) # how much noise to add to the image
-    parser.add_argument("--resume-path", type=str, default=None)
-    parser.add_argument("--resume-id", type=str, default=None)
-    parser.add_argument(
-        "--logger",
-        type=str,
-        default="tensorboard",
-        choices=["tensorboard", "wandb"],
-    )
-    parser.add_argument("--wandb-project", type=str, default="atari.benchmark")
-    parser.add_argument(
-        "--watch",
-        default=False,
-        action="store_true",
-        help="watch the play of pre-trained policy only",
-    )
-    parser.add_argument("--save-buffer-name", type=str, default=None)
-    parser.add_argument(
-        "--icm-lr-scale",
-        type=float,
-        default=0.0,
-        help="use intrinsic curiosity module with this lr scale",
-    )
-    parser.add_argument(
-        "--icm-reward-scale",
-        type=float,
-        default=0.01,
-        help="scaling factor for intrinsic curiosity reward",
-    )
-    parser.add_argument(
-        "--icm-forward-loss-weight",
-        type=float,
-        default=0.2,
-        help="weight for the forward model loss in ICM",
-    )
     return parser.parse_args()
 
 
 def test_discrete_sac(args: argparse.Namespace = get_args()) -> None:
+    args.watch = False
     env, train_envs, test_envs, watch_env = make_atari_env(
         args.task,
         args.seed,
@@ -116,11 +68,12 @@ def test_discrete_sac(args: argparse.Namespace = get_args()) -> None:
         obs, _ = env.reset()
         frame = obs[0]
         image = PIL.Image.fromarray(frame)
-        images.append(image)
+        PIL.Image.Image.save(image, "./figures/states_with_diff_noise/test.png")
+        # images.append(image)
 
     # Display the images
-    for image in images:
-        image.show()
+    # for image in images:
+    #     image.show()
     
 
 

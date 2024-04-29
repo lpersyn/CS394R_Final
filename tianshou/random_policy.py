@@ -1,3 +1,5 @@
+#Source: https://github.com/thu-ml/tianshou/blob/master/tianshou/policy/random.py
+
 from typing import Any, TypeVar, cast
 
 import numpy as np
